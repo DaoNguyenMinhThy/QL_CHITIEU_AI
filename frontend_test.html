@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tài chính AI - Nhóm 14</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="left">
+            <h2 style="color: #1a73e8; margin-bottom: 20px;">BẢNG CHI TIÊU</h2>
+            
+            <div class="total-box">
+                <span>Tổng chi tiêu tuần này</span>
+                <span class="total-money" id="totalVal">0</span>
+                <span>VNĐ</span>
+            </div>
+
+            <div class="input-section">
+                <input type="text" id="inp" 
+                    placeholder="Ví dụ: Thứ 2 cafe 20k, trà sữa 35k..." 
+                    onkeypress="if(event.key==='Enter')send()">
+                
+                <button onclick="send()" id="btnSend">Gửi</button>
+                <button class="btn-clear" onclick="deleteAll()">🗑️ Xóa sạch toàn bộ</button>
+            </div>
+
+            <div id="status" style="margin-top:20px; font-size:13px; font-style:italic; color:#666;">
+                Sẵn sàng nhận dữ liệu...
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="table-container">
+                <h3 style="color: #1565c0; margin-top: 0;">📅 Nhật ký chi tiêu 7 ngày</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Thứ</th>
+                            <th>Nội dung chi tiết</th>
+                            <th style="text-align:right;">Tổng tiền</th>
+                            <th style="text-align:center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listBody">
+                        <tr><td colspan="4" style="text-align:center;">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="chart-container" style="background: #fff; padding: 20px; border-radius: 15px; border: 1px solid #eee; margin-top: 10px;">
+                <h4 style="text-align: center; color: #555; margin-bottom: 15px;">📊 Biểu đồ xu hướng chi tiêu</h4>
+                <canvas id="expenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        const daysOfWeek = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+        let myChart;
+
+        // 1. Hàm tải dữ liệu từ Backend
+        async function loadData() {
+            try {
+                // Tải tổng tiền
+                const resTotal = await fetch(`${API_URL}/stats/total`);
+                const dataTotal = await resTotal.json();
+                document.getElementById('totalVal').innerText = dataTotal.total.toLocaleString();
+
+                // Tải danh sách giao dịch
+                const resList = await fetch(`${API_URL}/transactions`);
+                const list = await resList.json();
+                
+                renderTable(list);
+                updateChart(list);
+            } catch (error) {
+                console.error("Lỗi khi tải dữ liệu:", error);
+                document.getElementById('status').innerText = "❌ Không kết nối được Backend!";
+            }
+        }
+
+        // 2. Hàm vẽ bảng nhật ký
+        function renderTable(list) {
+            const body = document.getElementById('listBody');
+            if (list.length === 0) {
+                body.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Trống. Hãy nhập chi tiêu bên trái!</td></tr>";
+                return;
+            }
+
+            const summary = {};
+            list.forEach(item => {
+                const dateObj = new Date(item.date);
+                const dayIdx = dateObj.getDay();
+                if (!summary[dayIdx]) {
+                    summary[dayIdx] = { name: daysOfWeek[dayIdx], total: 0, contents: [], ids: [] };
+                }
+                summary[dayIdx].total += item.amount;
+                summary[dayIdx].contents.push(item.content);
+                summary[dayIdx].ids.push(item._id);
+            });
+
+            body.innerHTML = "";
+            [1, 2, 3, 4, 5, 6, 0].forEach(idx => {
+                if (summary[idx]) {
+                    const d = summary[idx];
+                    body.innerHTML += `
+                        <tr>
+                            <td><span class="day-tag">${d.name}</span></td>
+                            <td>${d.contents.join(', ')}</td>
+                            <td style="text-align:right; font-weight:bold; color:#d32f2f;">${d.total.toLocaleString()}đ</td>
+                            <td style="text-align:center;">
+                                <button class="btn-del" onclick="deleteItems('${d.ids.join(',')}')">Xóa</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        // 3. Hàm cập nhật biểu đồ cột
+        function updateChart(list) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const summary = {};
+            list.forEach(item => {
+                const dayIdx = new Date(item.date).getDay();
+                summary[dayIdx] = (summary[dayIdx] || 0) + item.amount;
+            });
+
+            const labels = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"];
+            const chartData = [1, 2, 3, 4, 5, 6, 0].map(idx => summary[idx] || 0);
+
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số tiền chi (VNĐ)',
+                        data: chartData,
+                        backgroundColor: 'rgba(26, 115, 232, 0.7)',
+                        borderColor: '#1a73e8',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // 4. Hàm gửi dữ liệu cho AI
+        async function send() {
+            const input = document.getElementById('inp');
+            const status = document.getElementById('status');
+            const text = input.value.trim();
+            
+            if (!text) return;
+
+            status.innerText = "⏳ AI Gemini đang phân tích...";
+            status.style.color = "#1a73e8";
+
+            try {
+                const res = await fetch(`${API_URL}/add-ai`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (res.ok) {
+                    input.value = "";
+                    status.innerText = "✅ Đã cập nhật thành công!";
+                    status.style.color = "green";
+                    loadData();
+                } else {
+                    status.innerText = "❌ Lỗi AI hoặc hết lượt dùng (Quota).";
+                    status.style.color = "red";
+                }
+            } catch (e) {
+                status.innerText = "❌ Lỗi kết nối server!";
+            }
+        }
+
+        // 5. Các hàm xóa
+        async function deleteItems(ids) {
+            if (confirm("Bạn có chắc muốn xóa chi tiêu ngày này?")) {
+                const idList = ids.split(',');
+                for (let id of idList) {
+                    await fetch(`${API_URL}/transactions/delete/${id}`);
+                }
+                loadData();
+            }
+        }
+
+        async function deleteAll() {
+            if (confirm("Xóa sạch toàn bộ dữ liệu nhật ký?")) {
+                await fetch(`${API_URL}/transactions/all/delete`);
+                loadData();
+            }
+        }
+
+        // Khởi chạy khi load trang
+        window.onload = loadData;
+    </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    margin: 0; padding: 20px; 
+    display: flex; justify-content: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+.wrapper { display: flex; gap: 20px; width: 100%; max-width: 1200px; }
+
+.left, .right { 
+    background: white; padding: 25px; 
+    border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+}
+
+.left { flex: 1; height: fit-content; text-align: center; }
+.right { flex: 2; display: flex; flex-direction: column; gap: 25px; }
+
+.total-box { 
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); 
+    padding: 25px; border-radius: 12px; 
+    margin-bottom: 25px; color: white;
+    box-shadow: 0 4px 15px rgba(37, 117, 252, 0.4);
+}
+
+.total-money { font-size: 32px; font-weight: bold; display: block; color: white !important; margin: 10px 0; }
+
+input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+
+button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+
+button:hover { background: #1557b0; }
+
+.btn-clear { background: white; color: #d93025; border: 1px solid #ffa39e; margin-top: 10px; }
+
+table { width: 100%; border-collapse: collapse; }
+th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; }
+td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+
+.day-tag { font-weight: bold; color: #1a73e8; background: #e8f0fe; padding: 4px 8px; border-radius: 4px; }
+
+.btn-del { background: #ff4d4f; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }

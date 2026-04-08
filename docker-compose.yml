@@ -1,0 +1,24 @@
+services:
+  # 1. Cơ sở dữ liệu MongoDB
+  db-mongo:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  # 2. Ứng dụng Backend AI
+  backend:
+    build: ./backend
+    container_name: backend_container
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db-mongo
+    environment:
+      - MONGO_URI=mongodb://db-mongo:27017/finance_db
+      - GEMINI_API_KEY=AIzaSyB_b5citp1AVvTy9CH6gjY6CO1M5jmp7Gg
+
+volumes:
+  mongodb_data:
