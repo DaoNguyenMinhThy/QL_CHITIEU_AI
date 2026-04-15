@@ -14,7 +14,7 @@ mongoose.connect(mongoUri)
   .catch(err => console.error('❌ MongoDB Error:', err));
 
 // 2. Cấu hình Gemini AI
-const API_KEY = "AIzaSyBBfgQDkV_xXklPgYrKT7BE76jnA69j1eo"; 
+const API_KEY = "AIzaSyCvFrXixffjREkny6fAiOhkXLm4CufEkmg";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 // 3. Schema dữ liệu
